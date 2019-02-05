@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import {
   RESOLVER_DELEGATE_METADATA,
   RESOLVER_NAME_METADATA,
+  RESOLVER_PREFIX_METADATA,
   RESOLVER_PROPERTY_METADATA,
   RESOLVER_TYPE_METADATA,
 } from '../graphql.constants';
@@ -27,6 +28,7 @@ export function extractMetadata(
     callback,
   );
   const resolverName = Reflect.getMetadata(RESOLVER_NAME_METADATA, callback);
+  const resolverPrefix = Reflect.getMetadata(RESOLVER_PREFIX_METADATA, instance.constructor);
   const isDelegated = !!Reflect.getMetadata(
     RESOLVER_DELEGATE_METADATA,
     callback,
@@ -35,7 +37,7 @@ export function extractMetadata(
     return null;
   }
   return {
-    name: resolverName || methodName,
+    name: resolverName || (resolverPrefix ? `${resolverPrefix}${methodName}` : methodName),
     type: resolverType,
     methodName,
   };

@@ -5,6 +5,7 @@ export {
   Query,
   ResolveProperty,
   Resolver,
+  ResolverPrefix,
   Scalar,
   Subscription,
 } from './decorators/resolvers.decorators';

@@ -3,6 +3,7 @@ import { Resolvers } from '../enums/resolvers.enum';
 import {
   RESOLVER_DELEGATE_METADATA,
   RESOLVER_NAME_METADATA,
+  RESOLVER_PREFIX_METADATA,
   RESOLVER_PROPERTY_METADATA,
   RESOLVER_TYPE_METADATA,
   SCALAR_NAME_METADATA,
@@ -61,6 +62,12 @@ export const Query = createResolverDecorator(Resolvers.QUERY);
 export const Mutation = createResolverDecorator(Resolvers.MUTATION);
 export const Subscription = createResolverDecorator(Resolvers.SUBSCRIPTION);
 export const Resolver = createResolverDecorator();
+
+export function ResolverPrefix(name: string): ClassDecorator {
+  return (target, key?, descriptor?) => {
+    ReflectMetadata(RESOLVER_PREFIX_METADATA, name)(target, key, descriptor);
+  };
+}
 
 export const ResolveProperty = createPropertyDecorator;
 export const DelegateProperty = createDelegateDecorator;

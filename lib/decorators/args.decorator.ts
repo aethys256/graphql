@@ -4,6 +4,7 @@ import * as optional from 'optional';
 import 'reflect-metadata';
 import { GqlParamtype } from '../enums/gql-paramtype.enum';
 import { BasicOptions } from '../external/type-graphql.types';
+import { lazyMetadataStorage } from '../storages/lazy-metadata.storage';
 import { addPipesMetadata } from './param.utils';
 
 const { Arg: TypeGqlArg, Args: TypeGqlArgs } =
@@ -34,7 +35,11 @@ export function Args(
   let argOptions = {} as BasicOptions;
   let property = propertyOrOptions;
 
-  if (propertyOrOptions && isObject(propertyOrOptions)) {
+  if (
+    propertyOrOptions &&
+    isObject(propertyOrOptions) &&
+    !(propertyOrOptions as PipeTransform).transform
+  ) {
     property = (propertyOrOptions as Record<string, any>).name;
     typeFn = (propertyOrOptions as Record<string, any>).type;
     argOptions = {
@@ -48,7 +53,12 @@ export function Args(
     addPipesMetadata(GqlParamtype.ARGS, property, pipes, target, key, index);
     property && isString(property)
       ? TypeGqlArg &&
-        TypeGqlArg(property, typeFn, argOptions)(target, key, index)
-      : TypeGqlArgs && TypeGqlArgs(typeFn)(target, key, index);
+        lazyMetadataStorage.store(() =>
+          TypeGqlArg(property, typeFn, argOptions)(target, key, index),
+        )
+      : TypeGqlArgs &&
+        lazyMetadataStorage.store(() =>
+          TypeGqlArgs(typeFn)(target, key, index),
+        );
   };
 }

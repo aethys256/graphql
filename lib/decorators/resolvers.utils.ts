@@ -1,5 +1,9 @@
 import { SetMetadata, Type } from '@nestjs/common';
-import { isFunction, isString } from '@nestjs/common/utils/shared.utils';
+import {
+  isFunction,
+  isObject,
+  isString,
+} from '@nestjs/common/utils/shared.utils';
 import * as optional from 'optional';
 import { Resolvers } from '../enums/resolvers.enum';
 import {
@@ -7,12 +11,12 @@ import {
   ReturnTypeFunc,
 } from '../external/type-graphql.types';
 import {
-  FIELD_TYPENAME,
   RESOLVER_DELEGATE_METADATA,
   RESOLVER_NAME_METADATA,
   RESOLVER_PROPERTY_METADATA,
   RESOLVER_TYPE_METADATA,
 } from '../graphql.constants';
+import { lazyMetadataStorage } from '../storages/lazy-metadata.storage';
 
 const { FieldResolver } = optional('type-graphql') || ({} as any);
 
@@ -32,21 +36,45 @@ export function addResolverMetadata(
 }
 
 export function createPropertyDecorator(
+  typeFunc?: ReturnTypeFunc,
+  options?: AdvancedOptions,
+): MethodDecorator;
+export function createPropertyDecorator(
   propertyName?: string,
   typeFunc?: ReturnTypeFunc,
   options?: AdvancedOptions,
+);
+export function createPropertyDecorator(
+  propertyNameOrFunc?: string | ReturnTypeFunc,
+  typeFuncOrOptions?: ReturnTypeFunc | AdvancedOptions,
+  advancedOptions?: AdvancedOptions,
 ): MethodDecorator {
   return (
     target: Function | Object,
     key?: string | symbol,
     descriptor?: any,
   ) => {
+    let [propertyName, typeFunc, options] = isFunction(propertyNameOrFunc)
+      ? [undefined, propertyNameOrFunc, typeFuncOrOptions]
+      : [propertyNameOrFunc, typeFuncOrOptions, advancedOptions];
+
     SetMetadata(RESOLVER_NAME_METADATA, propertyName)(target, key, descriptor);
     SetMetadata(RESOLVER_PROPERTY_METADATA, true)(target, key, descriptor);
 
-    const isField = propertyName !== FIELD_TYPENAME && key !== FIELD_TYPENAME;
+    const isField = true;
     if (FieldResolver && isField) {
-      FieldResolver(typeFunc, options)(target, key, descriptor);
+      options = isObject(options)
+        ? {
+            name: propertyName as string,
+            ...options,
+          }
+        : propertyName
+        ? { name: propertyName as string }
+        : undefined;
+
+      lazyMetadataStorage.store(() =>
+        FieldResolver(typeFunc, options)(target, key, descriptor),
+      );
     }
   };
 }

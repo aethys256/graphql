@@ -12,12 +12,10 @@ import { InternalCoreModule } from '@nestjs/core/injector/internal-core-module';
 import { Module } from '@nestjs/core/injector/module';
 import { ModulesContainer } from '@nestjs/core/injector/modules-container';
 import { MetadataScanner } from '@nestjs/core/metadata-scanner';
-import { withFilter } from 'apollo-server-express';
 import { head, identity } from 'lodash';
 import { GqlModuleOptions, SubscriptionOptions } from '..';
 import { GqlParamtype } from '../enums/gql-paramtype.enum';
 import { Resolvers } from '../enums/resolvers.enum';
-import { FieldParamsFactory } from '../factories/field-params.factory';
 import { GqlParamsFactory } from '../factories/params.factory';
 import {
   GRAPHQL_MODULE_OPTIONS,
@@ -26,13 +24,13 @@ import {
   SUBSCRIPTION_TYPE,
 } from '../graphql.constants';
 import { ResolverMetadata } from '../interfaces/resolver-metadata.interface';
+import { createAsyncIterator } from '../utils/async-iterator.util';
 import { extractMetadata } from '../utils/extract-metadata.util';
 import { BaseExplorerService } from './base-explorer.service';
 
 @Injectable()
 export class ResolversExplorerService extends BaseExplorerService {
   private readonly gqlParamsFactory = new GqlParamsFactory();
-  private readonly fieldParamsFactory = new FieldParamsFactory();
   private readonly injector = new Injector();
 
   constructor(
@@ -124,9 +122,20 @@ export class ResolversExplorerService extends BaseExplorerService {
     isRequestScoped: boolean,
     transform: Function = identity,
   ) {
-    const paramsFactory = this.isFieldResolver(resolver)
-      ? this.fieldParamsFactory
-      : this.gqlParamsFactory;
+    const paramsFactory = this.gqlParamsFactory;
+    const isPropertyResolver = ![
+      Resolvers.MUTATION,
+      Resolvers.QUERY,
+      Resolvers.SUBSCRIPTION,
+    ].some(type => type === resolver.type);
+
+    const contextOptions = isPropertyResolver
+      ? {
+          guards: false,
+          filters: false,
+          interceptors: false,
+        }
+      : undefined;
 
     if (isRequestScoped) {
       const resolverCallback = async (...args: any[]) => {
@@ -159,6 +168,7 @@ export class ResolversExplorerService extends BaseExplorerService {
           paramsFactory,
           contextId,
           wrapper.id,
+          contextOptions,
         );
         return callback(...args);
       };
@@ -170,6 +180,9 @@ export class ResolversExplorerService extends BaseExplorerService {
       resolver.methodName,
       PARAM_ARGS_METADATA,
       paramsFactory,
+      undefined,
+      undefined,
+      contextOptions,
     );
     return resolverCallback;
   }
@@ -187,10 +200,15 @@ export class ResolversExplorerService extends BaseExplorerService {
         ...resolverMetadata,
         callback: {
           ...baseCallbackMetadata,
-          subscribe: createSubscribeContext(
-            (subscription: Function) => (...args: any[]) =>
-              withFilter(subscription(), subscriptionOptions.filter),
-          ),
+          subscribe: <TPayload, TVariables, TContext, TInfo>(
+            ...args: [TPayload, TVariables, TContext, TInfo]
+          ) =>
+            createAsyncIterator(createSubscribeContext()(...args), payload =>
+              (subscriptionOptions.filter as Function)(
+                payload,
+                ...args.slice(1),
+              ),
+            ),
         },
       };
     }
@@ -201,6 +219,15 @@ export class ResolversExplorerService extends BaseExplorerService {
         subscribe: createSubscribeContext(),
       },
     };
+  }
+
+  getAllCtors(): Function[] {
+    const modules = this.getModules(
+      this.modulesContainer,
+      this.gqlOptions.include || [],
+    );
+    const resolvers = this.flatMap(modules, instance => instance.metatype);
+    return resolvers;
   }
 
   private registerContextProvider<T = any>(request: T, contextId: ContextId) {
@@ -220,13 +247,5 @@ export class ResolversExplorerService extends BaseExplorerService {
       instance: request,
       isResolved: true,
     });
-  }
-
-  private isFieldResolver(metadata: ResolverMetadata): boolean {
-    return ![
-      Resolvers.MUTATION,
-      Resolvers.QUERY,
-      Resolvers.SUBSCRIPTION,
-    ].includes(metadata.type as Resolvers);
   }
 }

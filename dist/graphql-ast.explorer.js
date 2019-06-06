@@ -127,7 +127,7 @@ let GraphQLAstExplorer = class GraphQLAstExplorer {
         type = nestedType;
         const isArray = type.kind === 'ListType';
         if (isArray) {
-            const { required, type: nestedType } = this.getNestedType(lodash_1.get(type, 'type'));
+            const { type: nestedType } = this.getNestedType(lodash_1.get(type, 'type'));
             type = nestedType;
             const typeName = lodash_1.get(type, 'name.value');
             return {

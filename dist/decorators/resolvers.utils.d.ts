@@ -6,3 +6,4 @@ export declare function createPropertyDecorator(typeFunc?: ReturnTypeFunc, optio
 export declare function createPropertyDecorator(propertyName?: string, typeFunc?: ReturnTypeFunc, options?: AdvancedOptions): any;
 export declare function createDelegateDecorator(propertyName?: string, typeFunc?: ReturnTypeFunc, options?: AdvancedOptions): MethodDecorator;
 export declare const getClassName: (nameOrType: string | Function | Type<any>) => any;
+export declare const getClassOrUndefined: (typeOrFunc: Function | Type<any>) => any;

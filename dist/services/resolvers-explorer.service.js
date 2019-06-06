@@ -37,6 +37,7 @@ const graphql_constants_1 = require("../graphql.constants");
 const async_iterator_util_1 = require("../utils/async-iterator.util");
 const extract_metadata_util_1 = require("../utils/extract-metadata.util");
 const base_explorer_service_1 = require("./base-explorer.service");
+const gqlContextIdSymbol = Symbol('GQL_CONTEXT_ID');
 let ResolversExplorerService = class ResolversExplorerService extends base_explorer_service_1.BaseExplorerService {
     constructor(modulesContainer, metadataScanner, externalContextCreator, gqlOptions) {
         super();
@@ -92,9 +93,19 @@ let ResolversExplorerService = class ResolversExplorerService extends base_explo
         if (isRequestScoped) {
             const resolverCallback = (...args) => __awaiter(this, void 0, void 0, function* () {
                 const gqlContext = paramsFactory.exchangeKeyForValue(gql_paramtype_enum_1.GqlParamtype.CONTEXT, undefined, args);
-                const gqlInfo = paramsFactory.exchangeKeyForValue(gql_paramtype_enum_1.GqlParamtype.INFO, undefined, args);
-                const contextId = gqlInfo && gqlInfo.contextId ? gqlInfo.contextId : context_id_factory_1.createContextId();
-                gqlInfo && (gqlInfo.contextId = contextId);
+                let contextId;
+                if (gqlContext && gqlContext[gqlContextIdSymbol]) {
+                    contextId = gqlContext[gqlContextIdSymbol];
+                }
+                else {
+                    contextId = context_id_factory_1.createContextId();
+                    Object.defineProperty(gqlContext, gqlContextIdSymbol, {
+                        value: contextId,
+                        enumerable: false,
+                        configurable: false,
+                        writable: false,
+                    });
+                }
                 this.registerContextProvider(gqlContext, contextId);
                 const contextInstance = yield this.injector.loadPerContext(instance, moduleRef, moduleRef.providers, contextId);
                 const callback = this.externalContextCreator.create(contextInstance, transform(contextInstance[resolver.methodName]), resolver.methodName, graphql_constants_1.PARAM_ARGS_METADATA, paramsFactory, contextId, wrapper.id, contextOptions);

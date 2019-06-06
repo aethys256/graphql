@@ -5,9 +5,15 @@ const optional = require("optional");
 const lazy_metadata_storage_1 = require("../storages/lazy-metadata.storage");
 const resolvers_utils_1 = require("./resolvers.utils");
 const { Resolver: TypeGqlResolver } = optional('type-graphql') || {};
+const { getMetadataStorage } = optional('type-graphql/dist/metadata/getMetadataStorage') || {};
 function Resolver(nameOrType, options) {
     return (target, key, descriptor) => {
-        const name = nameOrType && resolvers_utils_1.getClassName(nameOrType);
+        let name = nameOrType && resolvers_utils_1.getClassName(nameOrType);
+        if (getMetadataStorage && shared_utils_1.isFunction(nameOrType)) {
+            const ctor = resolvers_utils_1.getClassOrUndefined(nameOrType);
+            const objectMetadata = getMetadataStorage().objectTypes.find(type => type.target === ctor);
+            objectMetadata && (name = objectMetadata.name);
+        }
         resolvers_utils_1.addResolverMetadata(undefined, name, target, key, descriptor);
         if (!shared_utils_1.isString(nameOrType)) {
             TypeGqlResolver &&

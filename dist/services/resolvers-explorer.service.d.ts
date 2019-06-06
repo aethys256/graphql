@@ -20,7 +20,7 @@ export declare class ResolversExplorerService extends BaseExplorerService {
     createSubscriptionMetadata(createSubscribeContext: Function, subscriptionOptions: SubscriptionOptions, resolverMetadata: ResolverMetadata): {
         callback: {
             subscribe: any;
-            resolve: <TPayload = any, TArgs = any, TContext = any, TInfo = any, TReturnValue = any>(payload: TPayload, args: TArgs, context: TContext, info: TInfo) => TReturnValue;
+            resolve: (payload: any, args: any, context: any, info: any) => any;
         };
         name: string;
         type: string;

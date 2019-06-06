@@ -41,10 +41,14 @@ exports.getClassName = (nameOrType) => {
     if (shared_utils_1.isString(nameOrType)) {
         return nameOrType;
     }
-    return isConstructor(nameOrType)
-        ? nameOrType.name
-        : shared_utils_1.isFunction(nameOrType)
-            ? nameOrType().name
+    const classOrUndefined = exports.getClassOrUndefined(nameOrType);
+    return classOrUndefined && classOrUndefined.name;
+};
+exports.getClassOrUndefined = (typeOrFunc) => {
+    return isConstructor(typeOrFunc)
+        ? typeOrFunc
+        : shared_utils_1.isFunction(typeOrFunc)
+            ? typeOrFunc()
             : undefined;
 };
 function isConstructor(obj) {

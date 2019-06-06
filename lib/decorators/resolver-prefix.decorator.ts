@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { RESOLVER_PREFIX_METADATA } from '../graphql.constants';
+import { RESOLVER_PREFIX_METADATA, } from '../graphql.constants';
 
 export function ResolverPrefix(name: string): ClassDecorator {
   return (target, key?, descriptor?) => {

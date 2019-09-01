@@ -43,7 +43,7 @@ let DelegatesExplorerService = class DelegatesExplorerService extends base_explo
             .filter(resolver => !!resolver)
             .map(resolver => {
             const callback = instance[resolver.methodName].bind(instance);
-            return Object.assign({}, resolver, { callback });
+            return Object.assign(Object.assign({}, resolver), { callback });
         });
     }
     curryDelegates(delegates) {

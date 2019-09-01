@@ -2,10 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const shared_utils_1 = require("@nestjs/common/utils/shared.utils");
-const optional = require("optional");
 const graphql_constants_1 = require("../graphql.constants");
 const lazy_metadata_storage_1 = require("../storages/lazy-metadata.storage");
-const { FieldResolver } = optional('type-graphql') || {};
+let FieldResolver;
+try {
+    FieldResolver = require('type-graphql').FieldResolver;
+}
+catch (e) { }
 function addResolverMetadata(resolver, name, target, key, descriptor) {
     common_1.SetMetadata(graphql_constants_1.RESOLVER_TYPE_METADATA, resolver || name)(target, key, descriptor);
     common_1.SetMetadata(graphql_constants_1.RESOLVER_NAME_METADATA, name)(target, key, descriptor);

@@ -5,6 +5,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const lodash_1 = require("lodash");
@@ -15,18 +24,21 @@ let GraphQLAstExplorer = class GraphQLAstExplorer {
         this.root = ['Query', 'Mutation', 'Subscription'];
     }
     explore(documentNode, outputPath, mode) {
-        if (!documentNode) {
-            return;
-        }
-        const tsAstHelper = new ts_morph_1.default();
-        const tsFile = tsAstHelper.createSourceFile(outputPath, '', {
-            overwrite: true,
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!documentNode) {
+                return;
+            }
+            const tsMorphLib = yield Promise.resolve().then(() => require('ts-morph'));
+            const tsAstHelper = new tsMorphLib.Project();
+            const tsFile = tsAstHelper.createSourceFile(outputPath, '', {
+                overwrite: true,
+            });
+            let { definitions } = documentNode;
+            definitions = lodash_1.sortBy(definitions, 'kind');
+            definitions.forEach(item => this.lookupDefinition(item, tsFile, mode));
+            tsFile.insertText(0, graphql_constants_1.DEFINITIONS_FILE_HEADER);
+            return tsFile;
         });
-        let { definitions } = documentNode;
-        definitions = lodash_1.sortBy(definitions, 'kind');
-        definitions.forEach(item => this.lookupDefinition(item, tsFile, mode));
-        tsFile.insertText(0, graphql_constants_1.DEFINITIONS_FILE_HEADER);
-        return tsFile;
     }
     lookupDefinition(item, tsFile, mode) {
         switch (item.kind) {
@@ -46,9 +58,11 @@ let GraphQLAstExplorer = class GraphQLAstExplorer {
         }
     }
     lookupRootSchemaDefinition(operationTypes, tsFile, mode) {
+        const structureKind = mode === 'class' ? ts_morph_1.StructureKind.Class : ts_morph_1.StructureKind.Interface;
         const rootInterface = this.addClassOrInterface(tsFile, mode, {
             name: 'ISchema',
             isExported: true,
+            kind: structureKind,
         });
         operationTypes.forEach(item => {
             if (!item) {
@@ -60,6 +74,7 @@ let GraphQLAstExplorer = class GraphQLAstExplorer {
             const interfaceRef = this.addClassOrInterface(tsFile, mode, {
                 name: this.addSymbolIfRoot(lodash_1.upperFirst(interfaceName)),
                 isExported: true,
+                kind: structureKind,
             });
             rootInterface.addProperty({
                 name: interfaceName,
@@ -74,11 +89,13 @@ let GraphQLAstExplorer = class GraphQLAstExplorer {
         }
         let parentRef = this.getClassOrInterface(tsFile, mode, this.addSymbolIfRoot(parentName));
         if (!parentRef) {
+            const structureKind = mode === 'class' ? ts_morph_1.StructureKind.Class : ts_morph_1.StructureKind.Interface;
             const isRoot = this.root.indexOf(parentName) >= 0;
             parentRef = this.addClassOrInterface(tsFile, mode, {
                 name: this.addSymbolIfRoot(lodash_1.upperFirst(parentName)),
                 isExported: true,
                 isAbstract: isRoot && mode === 'class',
+                kind: structureKind,
             });
         }
         const interfaces = lodash_1.get(item, 'interfaces');
@@ -175,12 +192,13 @@ let GraphQLAstExplorer = class GraphQLAstExplorer {
                 name: lodash_1.get(element, 'name.value'),
                 type: name,
                 hasQuestionToken: !required,
+                kind: ts_morph_1.StructureKind.Parameter,
             };
         });
     }
     addScalarDefinition(item, tsFile) {
         const name = lodash_1.get(item, 'name.value');
-        if (!name) {
+        if (!name || name === 'Date') {
             return;
         }
         tsFile.addTypeAlias({

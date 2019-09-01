@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { flatten } from 'lodash';
 import { mergeTypes } from 'merge-graphql-schemas';
 import * as util from 'util';
+const normalize = require('normalize-path');
 
 const readFile = util.promisify(fs.readFile);
 
@@ -16,16 +17,18 @@ export class GraphQLTypesLoader {
 
     const types = await this.getTypesFromPaths(paths);
     const flatTypes = flatten(types);
-    const tempType = `type Query { temp__: Boolean }`; // Temporary workaround: https://github.com/okgrow/merge-graphql-schemas/issues/155
-
-    return mergeTypes([...flatTypes, tempType], { all: true });
+    return mergeTypes(flatTypes, { all: true }) as any;
   }
 
   private async getTypesFromPaths(paths: string | string[]): Promise<string[]> {
-    const filePaths = await glob.async(paths, {
+    paths = util.isArray(paths)
+      ? paths.map(path => normalize(path))
+      : normalize(paths);
+
+    const filePaths = await glob(paths, {
       ignore: ['node_modules'],
     });
-    const fileContentsPromises = filePaths.map(filePath => {
+    const fileContentsPromises = filePaths.sort().map(filePath => {
       return readFile(filePath.toString(), 'utf8');
     });
 

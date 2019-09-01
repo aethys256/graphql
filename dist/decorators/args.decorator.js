@@ -1,12 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const shared_utils_1 = require("@nestjs/common/utils/shared.utils");
-const optional = require("optional");
 require("reflect-metadata");
 const gql_paramtype_enum_1 = require("../enums/gql-paramtype.enum");
 const lazy_metadata_storage_1 = require("../storages/lazy-metadata.storage");
 const param_utils_1 = require("./param.utils");
-const { Arg: TypeGqlArg, Args: TypeGqlArgs } = optional('type-graphql') || {};
+let TypeGqlArg, TypeGqlArgs;
+try {
+    const TypeGql = require('type-graphql');
+    TypeGqlArg = TypeGql.Arg;
+    TypeGqlArgs = TypeGql.Args;
+}
+catch (e) { }
 function Args(propertyOrOptions, ...pipes) {
     let typeFn = undefined;
     let argOptions = {};

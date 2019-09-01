@@ -1,11 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const shared_utils_1 = require("@nestjs/common/utils/shared.utils");
-const optional = require("optional");
 const lazy_metadata_storage_1 = require("../storages/lazy-metadata.storage");
 const resolvers_utils_1 = require("./resolvers.utils");
-const { Resolver: TypeGqlResolver } = optional('type-graphql') || {};
-const { getMetadataStorage } = optional('type-graphql/dist/metadata/getMetadataStorage') || {};
+let TypeGqlResolver;
+let getMetadataStorage;
+try {
+    TypeGqlResolver = require('type-graphql').Resolver;
+    getMetadataStorage = require('type-graphql/dist/metadata/getMetadataStorage')
+        .getMetadataStorage;
+}
+catch (e) { }
 function Resolver(nameOrType, options) {
     return (target, key, descriptor) => {
         let name = nameOrType && resolvers_utils_1.getClassName(nameOrType);

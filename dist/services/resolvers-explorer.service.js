@@ -12,10 +12,11 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -73,7 +74,7 @@ let ResolversExplorerService = class ResolversExplorerService extends base_explo
                 const subscriptionOptions = Reflect.getMetadata(graphql_constants_1.SUBSCRIPTION_OPTIONS_METADATA, instance[resolver.methodName]);
                 return this.createSubscriptionMetadata(createContext, subscriptionOptions, resolver);
             }
-            return Object.assign({}, resolver, { callback: createContext() });
+            return Object.assign(Object.assign({}, resolver), { callback: createContext() });
         });
     }
     createContextCallback(instance, prototype, wrapper, moduleRef, resolver, isRequestScoped, transform = lodash_1.identity) {
@@ -83,11 +84,12 @@ let ResolversExplorerService = class ResolversExplorerService extends base_explo
             resolvers_enum_1.Resolvers.QUERY,
             resolvers_enum_1.Resolvers.SUBSCRIPTION,
         ].some(type => type === resolver.type);
+        const fieldResolverEnhancers = this.gqlOptions.fieldResolverEnhancers || [];
         const contextOptions = isPropertyResolver
             ? {
-                guards: false,
-                filters: false,
-                interceptors: false,
+                guards: fieldResolverEnhancers.includes('guards'),
+                filters: fieldResolverEnhancers.includes('filters'),
+                interceptors: fieldResolverEnhancers.includes('interceptors'),
             }
             : undefined;
         if (isRequestScoped) {
@@ -121,9 +123,9 @@ let ResolversExplorerService = class ResolversExplorerService extends base_explo
             resolve: subscriptionOptions && subscriptionOptions.resolve,
         };
         if (subscriptionOptions && subscriptionOptions.filter) {
-            return Object.assign({}, resolverMetadata, { callback: Object.assign({}, baseCallbackMetadata, { subscribe: (...args) => async_iterator_util_1.createAsyncIterator(createSubscribeContext()(...args), payload => subscriptionOptions.filter(payload, ...args.slice(1))) }) });
+            return Object.assign(Object.assign({}, resolverMetadata), { callback: Object.assign(Object.assign({}, baseCallbackMetadata), { subscribe: (...args) => async_iterator_util_1.createAsyncIterator(createSubscribeContext()(...args), payload => subscriptionOptions.filter(payload, ...args.slice(1))) }) });
         }
-        return Object.assign({}, resolverMetadata, { callback: Object.assign({}, baseCallbackMetadata, { subscribe: createSubscribeContext() }) });
+        return Object.assign(Object.assign({}, resolverMetadata), { callback: Object.assign(Object.assign({}, baseCallbackMetadata), { subscribe: createSubscribeContext() }) });
     }
     getAllCtors() {
         const modules = this.getModules(this.modulesContainer, this.gqlOptions.include || []);

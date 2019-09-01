@@ -2,7 +2,7 @@ import { DocumentNode, EnumTypeDefinitionNode, FieldDefinitionNode, InputObjectT
 import { ClassDeclaration, ClassDeclarationStructure, InterfaceDeclaration, InterfaceDeclarationStructure, ParameterDeclarationStructure, SourceFile } from 'ts-morph';
 export declare class GraphQLAstExplorer {
     private readonly root;
-    explore(documentNode: DocumentNode, outputPath: string, mode: 'class' | 'interface'): SourceFile;
+    explore(documentNode: DocumentNode, outputPath: string, mode: 'class' | 'interface'): Promise<SourceFile>;
     lookupDefinition(item: Readonly<TypeSystemDefinitionNode>, tsFile: SourceFile, mode: 'class' | 'interface'): void;
     lookupRootSchemaDefinition(operationTypes: ReadonlyArray<OperationTypeDefinitionNode>, tsFile: SourceFile, mode: 'class' | 'interface'): void;
     addObjectTypeDefinition(item: ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode | InterfaceTypeDefinitionNode, tsFile: SourceFile, mode: 'class' | 'interface'): void;

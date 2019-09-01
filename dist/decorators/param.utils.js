@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const shared_utils_1 = require("@nestjs/common/utils/shared.utils");
 require("reflect-metadata");
 const graphql_constants_1 = require("../graphql.constants");
-const assignMetadata = (args, paramtype, index, data, ...pipes) => (Object.assign({}, args, { [`${paramtype}:${index}`]: {
+const assignMetadata = (args, paramtype, index, data, ...pipes) => (Object.assign(Object.assign({}, args), { [`${paramtype}:${index}`]: {
         index,
         data,
         pipes,

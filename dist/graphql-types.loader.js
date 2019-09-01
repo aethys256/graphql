@@ -6,10 +6,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -20,6 +21,7 @@ const fs = require("fs");
 const lodash_1 = require("lodash");
 const merge_graphql_schemas_1 = require("merge-graphql-schemas");
 const util = require("util");
+const normalize = require('normalize-path');
 const readFile = util.promisify(fs.readFile);
 let GraphQLTypesLoader = class GraphQLTypesLoader {
     mergeTypesByPaths(paths) {
@@ -29,16 +31,18 @@ let GraphQLTypesLoader = class GraphQLTypesLoader {
             }
             const types = yield this.getTypesFromPaths(paths);
             const flatTypes = lodash_1.flatten(types);
-            const tempType = `type Query { temp__: Boolean }`;
-            return merge_graphql_schemas_1.mergeTypes([...flatTypes, tempType], { all: true });
+            return merge_graphql_schemas_1.mergeTypes(flatTypes, { all: true });
         });
     }
     getTypesFromPaths(paths) {
         return __awaiter(this, void 0, void 0, function* () {
-            const filePaths = yield glob.async(paths, {
+            paths = util.isArray(paths)
+                ? paths.map(path => normalize(path))
+                : normalize(paths);
+            const filePaths = yield glob(paths, {
                 ignore: ['node_modules'],
             });
-            const fileContentsPromises = filePaths.map(filePath => {
+            const fileContentsPromises = filePaths.sort().map(filePath => {
                 return readFile(filePath.toString(), 'utf8');
             });
             return Promise.all(fileContentsPromises);

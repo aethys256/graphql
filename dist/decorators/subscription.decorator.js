@@ -2,12 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const shared_utils_1 = require("@nestjs/common/utils/shared.utils");
-const optional = require("optional");
 const resolvers_enum_1 = require("../enums/resolvers.enum");
 const graphql_constants_1 = require("../graphql.constants");
 const lazy_metadata_storage_1 = require("../storages/lazy-metadata.storage");
 const resolvers_utils_1 = require("./resolvers.utils");
-const { Subscription: TypeGqlSubscription } = optional('type-graphql') || {};
+let TypeGqlSubscription;
+try {
+    TypeGqlSubscription = require('type-graphql').Subscription;
+}
+catch (e) { }
 function Subscription(nameOrType, options = {}) {
     return (target, key, descriptor) => {
         const name = shared_utils_1.isString(nameOrType)

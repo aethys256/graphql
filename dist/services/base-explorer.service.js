@@ -19,7 +19,7 @@ class BaseExplorerService {
     groupMetadata(resolvers) {
         const groupByType = lodash_1.groupBy(resolvers, metadata => metadata.type);
         return lodash_1.mapValues(groupByType, resolversArr => resolversArr.reduce((prev, curr) => {
-            return Object.assign({}, prev, { [curr.name]: curr.callback });
+            return Object.assign(Object.assign({}, prev), { [curr.name]: curr.callback });
         }, {}));
     }
 }

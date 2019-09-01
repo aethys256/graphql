@@ -1,11 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const shared_utils_1 = require("@nestjs/common/utils/shared.utils");
-const optional = require("optional");
 const resolvers_enum_1 = require("../enums/resolvers.enum");
 const lazy_metadata_storage_1 = require("../storages/lazy-metadata.storage");
 const resolvers_utils_1 = require("./resolvers.utils");
-const { Mutation: TypeGqlMutation } = optional('type-graphql') || {};
+let TypeGqlMutation;
+try {
+    TypeGqlMutation = require('type-graphql').Mutation;
+}
+catch (e) { }
 function Mutation(nameOrType, options) {
     return (target, key, descriptor) => {
         const name = shared_utils_1.isString(nameOrType)
